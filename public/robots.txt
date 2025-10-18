@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://rogeliomorales-psicologia.com/sitemap.xml
+Host: rogeliomorales-psicologia.com
