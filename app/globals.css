@@ -3,6 +3,119 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Palette + layout + reseñas + modal + footer */
+  --surface-white: #ffffff;
+  --surface-warm: #f6ebe2;
+  --card-bg: rgba(255, 255, 255, 0.96);
+  --border-soft: #e7d8cf;
+  --muted: #6b6b6b;
+  --heading: #111827;
+}
+
+/* Paleta y tonos */
+.palette {
+  background: linear-gradient(180deg, var(--surface-white) 0%, var(--surface-warm) 100%);
+}
+.palette .bg-white {
+  background-color: var(--card-bg) !important;
+}
+.palette .bg-gray-50 {
+  background-color: rgba(246, 235, 226, 0.6) !important;
+}
+.palette .border,
+.palette .border-t,
+.palette .border-y {
+  border-color: var(--border-soft) !important;
+}
+.palette .text-gray-700 {
+  color: var(--muted) !important;
+}
+.palette h1,
+.palette h2,
+.palette h3 {
+  color: var(--heading) !important;
+}
+.palette .rounded-2xl.border,
+.palette .rounded-2xl.overflow-hidden {
+  background-color: var(--card-bg) !important;
+  box-shadow: 0 6px 18px rgba(20, 20, 20, 0.04);
+}
+
+/* Reveal animation */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.65s cubic-bezier(0.2, 0.9, 0.2, 1),
+    transform 0.65s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+/* Reseñas responsive */
+.reviews-container {
+  min-height: 8rem;
+  transition: height 260ms ease;
+  will-change: height;
+}
+@media (min-width: 768px) {
+  .reviews-container {
+    min-height: 11rem;
+  }
+}
+.reviews-track {
+  align-items: stretch;
+  display: flex;
+  width: 100%;
+}
+.reviews-article {
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+.reviews-article p {
+  white-space: normal;
+  line-height: 1.35;
+}
+@media (max-width: 420px) {
+  .reviews-article p {
+    font-size: 0.95rem;
+  }
+}
+
+/* Modal (reseña expandida) */
+.review-modal-backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+.review-modal {
+  max-width: 720px;
+  width: calc(100% - 2rem);
+  border-radius: 12px;
+}
+
+/* Footer responsive tweaks */
+footer .max-w-6xl {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+@media (max-width: 640px) {
+  footer .max-w-6xl {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
 }
 
 @theme inline {
