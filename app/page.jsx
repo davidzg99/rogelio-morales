@@ -46,7 +46,6 @@ export default function RogelioMoralesSite() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    // Front‑end validation
     if (!form.nombre || !form.email || !form.mensaje) {
       setStatus("error");
       return;
@@ -54,13 +53,25 @@ export default function RogelioMoralesSite() {
     setStatus("loading");
 
     try {
-      // TODO: Wire to backend (e.g., n8n webhook, Formspree, Airtable, email API)
-      // For now we simulate a successful submission.
-      await new Promise((res) => setTimeout(res, 900));
+      const res = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: form.nombre,
+          email: form.email,
+          mensaje: form.mensaje,
+        }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`HTTP ${res.status} - ${text}`);
+      }
+
       setStatus("success");
       setForm({ nombre: "", email: "", mensaje: "" });
     } catch (err) {
-      console.error(err);
+      console.error("Error sending form:", err);
       setStatus("error");
     }
   }
