@@ -653,98 +653,113 @@ export default function RogelioMoralesSite() {
       </section>
 
       {/* CONTACTO */}
-      <section id="contacto" className="bg-white border-t">
-        <div className="max-w-6xl mx-auto px-4 py-14">
-          <h2 className="text-2xl font-semibold tracking-tight mb-6">Contacto</h2>
-          <div className="grid md:grid-cols-2 gap-10">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium">Nombre</label>
-                <input
-                  type="text"
-                  name="nombre"
-                  value={form.nombre}
-                  onChange={handleChange}
-                  className="mt-1 w-full rounded-xl border p-3 outline-none focus:ring-2 focus:ring-gray-900"
-                  placeholder="Tu nombre completo"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  className="mt-1 w-full rounded-xl border p-3 outline-none focus:ring-2 focus:ring-gray-900"
-                  placeholder="Tu mejor email"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Mensaje</label>
-                <textarea
-                  name="mensaje"
-                  value={form.mensaje}
-                  onChange={handleChange}
-                  rows={5}
-                  className="mt-1 w-full rounded-xl border p-3 outline-none focus:ring-2 focus:ring-gray-900"
-                  placeholder="Cuéntame brevemente tu consulta"
-                />
-              </div>
-              <button
-                type="submit"
-                className="inline-flex items-center justify-center rounded-xl px-5 py-3 bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed"
-                disabled={status === "loading"}
-              >
-                {status === "loading" ? "Enviando…" : "Enviar"}
-              </button>
-              {status === "success" && (
-                <p className="text-sm text-green-600">
-                  ¡Mensaje enviado! Te contactaré pronto.
-                </p>
-              )}
-              {status === "error" && (
-                <p className="text-sm text-red-600">
-                  Revisa los campos o inténtalo de nuevo.
-                </p>
-              )}
-              <p className="text-[11px] text-gray-500">
-                Al enviar aceptas nuestra{" "}
-                <a href="#privacidad" className="underline">
-                  política de privacidad
-                </a>
-                . Tus datos solo se usarán para responder a tu consulta.
-              </p>
-            </form>
-          </div>
+      <section id="contacto" className="py-20 sm:py-28">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-center mb-10">Contáctame</h2>
 
-          <div className="bg-white rounded-2xl border p-6">
-            <h3 className="font-medium">Contacto directo</h3>
-            <ul className="mt-3 space-y-2 text-sm text-gray-700">
-              <li>
-                <strong>Tel:</strong>{" "}
-                <a className="underline" href="tel:+34XXXXXXXXX">
-                  +34 XXX XX XX XX
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+            {/* Formulario (izquierda) */}
+            <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 sm:p-8 shadow-lg flex flex-col gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="nombre" className="block text-sm font-semibold text-gray-700 mb-2">Nombre</label>
+                  <input type="text" name="nombre" id="nombre" value={form.nombre} onChange={handleChange} className="block w-full p-3 border rounded-lg focus:ring-amber-500 focus:border-amber-500" required />
+                </div>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                  <input type="email" name="email" id="email" value={form.email} onChange={handleChange} className="block w-full p-3 border rounded-lg focus:ring-amber-500 focus:border-amber-500" required />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="mensaje" className="block text-sm font-semibold text-gray-700 mb-2">Mensaje</label>
+                <textarea name="mensaje" id="mensaje" value={form.mensaje} onChange={handleChange} className="block w-full p-3 border rounded-lg focus:ring-amber-500 focus:border-amber-500 resize-y" rows={5} required />
+              </div>
+
+              <div className="mt-2 flex flex-col sm:flex-row gap-3">
+                <button type="submit" className="flex-1 bg-amber-600 text-white rounded-full px-6 py-3 text-lg font-semibold shadow-md hover:bg-amber-500 transition">
+                  {status === "loading" ? "Enviando..." : status === "success" ? "Mensaje Enviado" : "Enviar Mensaje"}
+                </button>
+
+                <a
+                  href="https://wa.me/34680385739?text=Hola%20Rogelio%2C%20me%20gustar%C3%ADa%20solicitar%20informaci%C3%B3n"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-green-600 hover:bg-green-700 text-white"
+                  aria-label="Abrir chat de WhatsApp"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 10-9 9v-2.2A6.8 6.8 0 0121 12z" />
+                    <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M17 7.5l-5 5m0 0L9 9.5m3 3.0L7.5 9" />
+                  </svg>
+                  WhatsApp
                 </a>
-              </li>
-              <li>
-                <strong>Email:</strong>{" "}
-                <a className="underline" href="mailto:contacto@rogeliomorales.es">
-                  contacto@rogeliomorales.es
-                </a>
-              </li>
-              <li>
-                <strong>Dirección:</strong> Carrer Antoni Fuster, 2, Ponent, 07014 Palma, Illes Balears
-              </li>
-            </ul>
-            <a
-              href="#ubicacion"
-              className="mt-4 inline-flex items-center justify-center rounded-xl px-4 py-2 border text-sm font-medium hover:bg-gray-50"
-            >
-              Ver mapa
-            </a>
+              </div>
+
+              {status === "error" && <p className="mt-3 text-red-600 text-center">Ocurrió un error. Por favor, inténtalo de nuevo.</p>}
+
+              <p className="mt-4 text-xs text-gray-500">Al enviar tus datos aceptarás la política de privacidad. Responderé en 24–48h laborables.</p>
+            </form>
+
+            {/* Tarjeta de contacto (derecha) */}
+            <aside className="rounded-2xl p-6 sm:p-8 shadow-lg h-full flex flex-col justify-between"
+                   style={{ background: "linear-gradient(135deg, rgba(246,235,226,0.42), rgba(255,255,255,0.9))", border: "1px solid rgba(231,216,207,0.9)" }}>
+              <div>
+                <h3 className="text-xl font-semibold mb-3">Contacto directo</h3>
+                <p className="text-sm text-gray-700 mb-4">Teléfono, email y acceso directo al mapa. También puedes abrir el chat por WhatsApp.</p>
+
+                <ul className="space-y-3 text-sm">
+                  <li className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-rose-600 mt-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 10.5V6a3 3 0 013-3h4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <div>
+                      <div className="text-xs text-gray-500">Teléfono</div>
+                      <a href="tel:+34680385739" className="font-medium text-gray-800">+34 680 38 57 39</a>
+                    </div>
+                  </li>
+
+                  <li className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-amber-600 mt-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8.5V6a3 3 0 013-3h12a3 3 0 013 3v8a3 3 0 01-3 3h-2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <div>
+                      <div className="text-xs text-gray-500">Email</div>
+                      <a href="mailto:contacto@rogeliomorales.es" className="font-medium text-gray-800">contacto@rogeliomorales.es</a>
+                    </div>
+                  </li>
+
+                  <li className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-600 mt-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 12a9 9 0 10-9 9v-2.2A6.8 6.8 0 0121 12z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <div>
+                      <div className="text-xs text-gray-500">WhatsApp</div>
+                      <a href="https://wa.me/34680385739" target="_blank" rel="noopener noreferrer" className="font-medium text-gray-800">Abrir chat</a>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="mt-6">
+                <div className="rounded-lg overflow-hidden border shadow-sm">
+                  <iframe
+                    title="Mini-mapa Santa Catalina"
+                    src="https://www.google.com/maps?q=39.5718664,2.6312768&z=16&output=embed"
+                    width="100%"
+                    height="140"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    aria-hidden="false"
+                  />
+                </div>
+
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <a href="https://www.google.com/maps?q=39.5718664,2.6312768" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-sm font-medium shadow-sm hover:bg-gray-50">
+                    Ver en Maps
+                  </a>
+
+                  <a href="tel:+34680385739" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-medium hover:bg-amber-500">
+                    Llamar
+                  </a>
+                </div>
+              </div>
+            </aside>
           </div>
         </div>
       </section>
