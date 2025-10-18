@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 // One‑page React site for psychologist Rogelio Morales
 // TailwindCSS recommended. Drop this component into any Vite/Next/CRA project.
@@ -9,6 +9,32 @@ export default function RogelioMoralesSite() {
   const [form, setForm] = useState({ nombre: "", email: "", mensaje: "" });
   const [status, setStatus] = useState("idle");
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Carrusel de reseñas
+  const reviews = [
+    {
+      name: "Marina R.",
+      text: "Muy profesional y cercano. Noté cambios desde las primeras sesiones.",
+    },
+    {
+      name: "Carlos P.",
+      text: "Me ayudó a gestionar el estrés del trabajo con herramientas prácticas.",
+    },
+    {
+      name: "Lucía G.",
+      text:
+        "La terapia con Rogelio ha sido un antes y un después en mi vida. Muy recomendable.",
+    },
+  ];
+  const [currentReview, setCurrentReview] = useState(0);
+  const isInteractingRef = useRef(false);
+  const intervalRef = useRef(null);
+  const pauseTimeoutRef = useRef(null);
+  // Slider refs / estado para drag/swipe
+  const containerRef = useRef(null);
+  const trackRef = useRef(null);
+  const startXRef = useRef(0);
+  const deltaXRef = useRef(0);
+  const isDraggingRef = useRef(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -67,6 +93,84 @@ export default function RogelioMoralesSite() {
       });
     };
   }, []);
+
+  useEffect(() => {
+    // autoplay cada 4s salvo interacción del usuario
+    intervalRef.current = setInterval(() => {
+      if (!isInteractingRef.current) {
+        setCurrentReview((s) => (s + 1) % reviews.length);
+      }
+    }, 4000);
+    return () => {
+      clearInterval(intervalRef.current);
+      clearTimeout(pauseTimeoutRef.current);
+    };
+  }, []);
+
+  const markUserInteracted = (actionIndex = null) => {
+    isInteractingRef.current = true;
+    if (actionIndex !== null) setCurrentReview(actionIndex);
+    if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
+    // reanudar autoplay tras 6s de inactividad
+    pauseTimeoutRef.current = setTimeout(() => {
+      isInteractingRef.current = false;
+    }, 6000);
+  };
+
+  const prevReview = () => {
+    markUserInteracted();
+    setCurrentReview((s) => (s - 1 + reviews.length) % reviews.length);
+  };
+  const nextReview = () => {
+    markUserInteracted();
+    setCurrentReview((s) => (s + 1) % reviews.length);
+  };
+
+  // Pointer / touch handlers para swipe (funcionan en desktop y móvil)
+  const onPointerDown = (e) => {
+    isDraggingRef.current = true;
+    startXRef.current = e.clientX ?? (e.touches && e.touches[0].clientX) ?? 0;
+    deltaXRef.current = 0;
+    if (trackRef.current) trackRef.current.style.transition = "none";
+    markUserInteracted();
+  };
+
+  const onPointerMove = (e) => {
+    if (!isDraggingRef.current) return;
+    const clientX = e.clientX ?? (e.touches && e.touches[0].clientX) ?? 0;
+    deltaXRef.current = clientX - startXRef.current;
+    if (trackRef.current && containerRef.current) {
+      const offset = -currentReview * containerRef.current.clientWidth + deltaXRef.current;
+      trackRef.current.style.transform = `translateX(${offset}px)`;
+    }
+  };
+
+  const onPointerUp = () => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    const containerW = containerRef.current?.clientWidth || 1;
+    const moved = deltaXRef.current;
+    // Umbral: 25% ancho para cambiar slide
+    if (Math.abs(moved) > containerW * 0.25) {
+      if (moved < 0) setCurrentReview((s) => (s + 1) % reviews.length);
+      else setCurrentReview((s) => (s - 1 + reviews.length) % reviews.length);
+    } else {
+      // volver al slide actual (usar % para evitar gaps)
+      if (trackRef.current) {
+        trackRef.current.style.transition = "transform 420ms cubic-bezier(.2,.9,.2,1)";
+        trackRef.current.style.transform = `translateX(${-currentReview * 100}%)`;
+      }
+    }
+    deltaXRef.current = 0;
+  };
+  
+  // Asegurarse que el track se reposiciona cuando cambia currentReview (autoplay o manual)
+  useEffect(() => {
+    if (trackRef.current) {
+      trackRef.current.style.transition = "transform 420ms cubic-bezier(.2,.9,.2,1)";
+      trackRef.current.style.transform = `translateX(${-currentReview * 100}%)`;
+    }
+  }, [currentReview]);
 
   return (
     <main className="min-h-screen bg-gray-50 text-gray-800 palette">
@@ -287,7 +391,7 @@ export default function RogelioMoralesSite() {
               </a>
             </div>
             <p className="mt-3 text-xs text-gray-500">
-              * Consultas presenciales en Santa Catalina y online.
+              * Consultas presenciales in Santa Catalina y online.
             </p>
           </div>
           <div className="justify-self-center">
@@ -395,29 +499,74 @@ export default function RogelioMoralesSite() {
       <section id="resenas" className="bg-white border-y">
         <div className="max-w-6xl mx-auto px-4 py-14">
           <h2 className="text-2xl font-semibold tracking-tight mb-6">Reseñas</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                name: "Marina R.",
-                text:
-                  "Muy profesional y cercano. Noté cambios desde las primeras sesiones.",
-              },
-              {
-                name: "Carlos P.",
-                text:
-                  "Me ayudó a gestionar el estrés del trabajo con herramientas prácticas.",
-              },
-              {
-                name: "Lucía G.",
-                text:
-                  "La terapia con Rogelio ha sido un antes y un después en mi vida. Muy recomendable.",
-              },
-            ].map((r, i) => (
-              <div key={i} className="rounded-2xl border bg-gray-50 p-6">
-                <p className="text-gray-700 italic">"{r.text}"</p>
-                <p className="mt-4 font-medium">{r.name}</p>
+
+          <div className="rounded-2xl border bg-gray-50 p-2 md:p-6">
+            {/* Contenedor del slider */}
+            <div
+              ref={containerRef}
+              className="relative overflow-hidden touch-pan-y"
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={onPointerUp}
+              onPointerLeave={onPointerUp}
+            >
+              {/* Track: ancho = n * 100% */}
+              <div
+                ref={trackRef}
+                style={{ width: `${reviews.length * 100}%`, transform: `translateX(${-currentReview * 100}%)` }}
+                className="flex transition-transform duration-500 ease-in-out"
+              >
+                {reviews.map((r, i) => (
+                  <article
+                    key={i}
+                    className="flex-shrink-0 w-full px-6 py-10 md:px-12 md:py-14"
+                    onMouseEnter={() => markUserInteracted()}
+                    onFocus={() => markUserInteracted()}
+                  >
+                    <p className="text-gray-700 italic text-lg md:text-xl">"{r.text}"</p>
+                    <p className="mt-4 font-medium">{r.name}</p>
+                  </article>
+                ))}
               </div>
-            ))}
+            </div>
+
+            {/* Controles y puntos — estilo más discreto y profesional */}
+            <div className="mt-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={prevReview}
+                  className="rounded-lg p-2 border bg-white hover:bg-gray-100 shadow-sm"
+                  aria-label="Anterior reseña"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  onClick={nextReview}
+                  className="rounded-lg p-2 border bg-white hover:bg-gray-100 shadow-sm"
+                  aria-label="Siguiente reseña"
+                >
+                  ›
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {reviews.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => { markUserInteracted(i); setCurrentReview(i); }}
+                    aria-label={`Ver reseña ${i + 1}`}
+                    className={`w-3.5 h-3.5 rounded-full ${i === currentReview ? "bg-gray-900" : "bg-gray-300"} transition`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="sr-only" aria-live="polite">
+              {reviews[currentReview].name}: {reviews[currentReview].text}
+            </div>
           </div>
         </div>
       </section>
@@ -506,7 +655,7 @@ export default function RogelioMoralesSite() {
                 </a>
               </li>
               <li>
-                <strong>Dirección:</strong> Santa Catalina, 07013 Palma
+                <strong>Dirección:</strong> Carrer Antoni Fuster, 2, Ponent, 07014 Palma, Illes Balears
               </li>
             </ul>
             <a
