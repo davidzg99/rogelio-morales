@@ -561,11 +561,11 @@ export default function RogelioMoralesSite() {
                 Máster en Gestión de RR. HH., Intervención Psicológica y
                 Pedagógica
               </h3>
-              <p className="text-sm text-gray-600 mt-1">(indicar centro)</p>
+              <p className="text-sm text-gray-600 mt-1">Universitat de les Illes Balears (UIB)</p>
             </div>
             <div className="rounded-2xl border bg-white p-6">
               <h3 className="font-medium">Máster en Psicología General Sanitaria</h3>
-              <p className="text-sm text-gray-600 mt-1">(indicar centro)</p>
+              <p className="text-sm text-gray-600 mt-1">Universidad Internacional de Valencia (UIV)</p>
             </div>
           </div>
         </div>
