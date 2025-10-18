@@ -35,6 +35,9 @@ export default function RogelioMoralesSite() {
   const startXRef = useRef(0);
   const deltaXRef = useRef(0);
   const isDraggingRef = useRef(false);
+  // Modal para ver reseña completa
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalIndex, setModalIndex] = useState(0);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -140,8 +143,10 @@ export default function RogelioMoralesSite() {
     const clientX = e.clientX ?? (e.touches && e.touches[0].clientX) ?? 0;
     deltaXRef.current = clientX - startXRef.current;
     if (trackRef.current && containerRef.current) {
-      const offset = -currentReview * containerRef.current.clientWidth + deltaXRef.current;
-      trackRef.current.style.transform = `translateX(${offset}px)`;
+      const containerW = containerRef.current.clientWidth || 1;
+      const movementPercent = (deltaXRef.current / containerW) * 100;
+      const offsetPercent = -currentReview * 100 + movementPercent;
+      trackRef.current.style.transform = `translateX(${offsetPercent}%)`;
     }
   };
 
@@ -162,6 +167,13 @@ export default function RogelioMoralesSite() {
       }
     }
     deltaXRef.current = 0;
+
+    // permitir que la altura vuelva a auto tras la animación (evitar "saltos")
+    if (containerRef.current) {
+      setTimeout(() => {
+        try { containerRef.current.style.height = "auto"; } catch (e) {}
+      }, 420);
+    }
   };
   
   // Asegurarse que el track se reposiciona cuando cambia currentReview (autoplay o manual)
@@ -172,6 +184,58 @@ export default function RogelioMoralesSite() {
     }
   }, [currentReview]);
 
+  // Ajustar la altura del contenedor al slide activo para evitar recortes en móvil
+  useEffect(() => {
+    const adjustHeight = () => {
+      const container = containerRef.current;
+      const track = trackRef.current;
+      if (!container || !track) return;
+      const active = track.children[currentReview];
+      if (active) {
+        // usar scrollHeight para contar todo el contenido y evitar recortes
+        const h = active.scrollHeight;
+        container.style.height = `${h}px`;
+      } else {
+        container.style.height = "auto";
+      }
+    };
+
+    // Ajustar inmediatamente y cuando cambie tamaño del slide
+    adjustHeight();
+
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(adjustHeight) : null;
+    if (ro && trackRef.current) {
+      Array.from(trackRef.current.children).forEach((child) => ro.observe(child));
+    }
+    window.addEventListener("resize", adjustHeight);
+    return () => {
+      if (ro) ro.disconnect();
+      window.removeEventListener("resize", adjustHeight);
+    };
+  }, [currentReview, reviews.length]);
+
+  // cerrar modal con Escape y bloquear scroll mientras está abierto
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") closeModal(); };
+    if (modalOpen) {
+      document.addEventListener("keydown", onKey);
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [modalOpen]);
+
+  const openModal = (i) => {
+    markUserInteracted(i);
+    setModalIndex(i);
+    setModalOpen(true);
+  };
+  const closeModal = () => setModalOpen(false);
+
   return (
     <main className="min-h-screen bg-gray-50 text-gray-800 palette">
       {/* Estilos de animación locales */}
@@ -180,7 +244,7 @@ export default function RogelioMoralesSite() {
          .palette {
            --surface-white: #ffffff;
            --surface-warm: #f6ebe2; /* color "carne" suave */
-           --card-bg: rgba(255,255,255,0.92);
+           --card-bg: rgba(255,255,255,0.96);
            --border-soft: #e7d8cf;
            --muted: #6b6b6b;
            --heading: #111827;
@@ -219,10 +283,16 @@ export default function RogelioMoralesSite() {
         @media (prefers-reduced-motion: reduce) { .reveal { transition: none !important; transform: none !important; } }
         
         /* Fix reseñas (móvil): garantizar altura mínima y evitar overflow de texto */
-        .reviews-container { min-height: 6.5rem; } /* móvil */
+        .reviews-container { min-height: 8rem; /* algo más grande para móviles */ }
         @media (min-width: 768px) { .reviews-container { min-height: 11rem; } } /* desktop */
-        .reviews-track { align-items: stretch; } /* que los slides ocupen toda la altura */
-        .reviews-article { box-sizing: border-box; min-height: 100%; overflow-wrap: break-word; word-break: break-word; }
+        .reviews-track { align-items: stretch; }
+        .reviews-article { box-sizing: border-box; min-height: 100%; overflow-wrap: anywhere; word-break: break-word; }
+        .reviews-article p { white-space: normal; line-height: 1.35; }
+        /* Suavizar transiciones de altura */
+        .reviews-container { transition: height 260ms ease; will-change: height; }
+        /* Modal (reseña expandida) */
+        .review-modal-backdrop { background: rgba(0,0,0,0.55); }
+        .review-modal { max-width: 720px; width: calc(100% - 2rem); border-radius: 12px; }
        `}</style>
 
       {/* NAVBAR */}
@@ -510,32 +580,37 @@ export default function RogelioMoralesSite() {
             {/* Contenedor del slider */}
             <div
               ref={containerRef}
-              className="relative overflow-hidden touch-pan-y"
+              className="relative overflow-hidden touch-pan-y reviews-container"
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
               onPointerCancel={onPointerUp}
               onPointerLeave={onPointerUp}
+              style={{ height: "auto", transition: "height 280ms ease" }}
             >
-              {/* Track: ancho = n * 100% */}
-              <div
-                ref={trackRef}
-                style={{ width: `${reviews.length * 100}%`, transform: `translateX(${-currentReview * 100}%)` }}
-                className="flex transition-transform duration-500 ease-in-out"
-              >
-                {reviews.map((r, i) => (
+               {/* Track: ancho = n * 100% */}
+               <div
+                 ref={trackRef}
+                 style={{ width: `${reviews.length * 100}%`, transform: `translateX(${-currentReview * 100}%)` }}
+                 className="flex transition-transform duration-500 ease-in-out reviews-track"
+               >
+                 {reviews.map((r, i) => (
                   <article
                     key={i}
-                    className="flex-shrink-0 w-full px-6 py-10 md:px-12 md:py-14"
+                    className="flex-shrink-0 w-full px-6 py-6 md:px-12 md:py-14 reviews-article flex flex-col justify-center cursor-pointer"
                     onMouseEnter={() => markUserInteracted()}
                     onFocus={() => markUserInteracted()}
+                    onClick={() => openModal(i)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") openModal(i); }}
                   >
                     <p className="text-gray-700 italic text-lg md:text-xl">"{r.text}"</p>
                     <p className="mt-4 font-medium">{r.name}</p>
                   </article>
-                ))}
-              </div>
-            </div>
+                 ))}
+               </div>
+             </div>
 
             {/* Controles y puntos — estilo más discreto y profesional */}
             <div className="mt-6 flex items-center justify-between">
@@ -679,7 +754,7 @@ export default function RogelioMoralesSite() {
         <div className="max-w-6xl mx-auto px-4 py-14">
           <h2 className="text-2xl font-semibold tracking-tight mb-4">Ubicación</h2>
           <p className="text-gray-600 mb-6">
-            Consulta en el barrio de Santa Catalina, Palma. Fácil acceso y opciones
+            Consulta in el barrio de Santa Catalina, Palma. Fácil acceso y opciones
             de aparcamiento cercanas.
           </p>
           <div className="rounded-2xl overflow-hidden border">
@@ -729,6 +804,24 @@ export default function RogelioMoralesSite() {
           </div>
         </div>
       </footer>
+
+      {/* Modal para reseña expandida */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center review-modal-backdrop" role="dialog" aria-modal="true">
+          <div className="review-modal bg-white p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-4">
+              <h3 className="text-lg font-semibold">Reseña de {reviews[modalIndex].name}</h3>
+              <button onClick={closeModal} aria-label="Cerrar" className="text-gray-500 hover:text-gray-800">✕</button>
+            </div>
+            <div className="mt-4 text-gray-700">
+              <p className="italic text-base">"{reviews[modalIndex].text}"</p>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button onClick={closeModal} className="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
