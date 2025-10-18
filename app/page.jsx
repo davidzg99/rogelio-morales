@@ -789,33 +789,33 @@ export default function RogelioMoralesSite() {
 
       {/* FOOTER */}
       <footer className="border-t">
-        <div className="max-w-6xl mx-auto px-4 py-10 text-sm text-gray-600 flex flex-col md:flex-row items-center justify-between gap-3">
-          <p>© {new Date().getFullYear()} Rogelio Morales – Psicólogo</p>
-          <div className="flex items-center gap-4">
-            <div className="flex gap-4">
-              <a id="privacidad" href="#" className="underline">
-                Privacidad
-              </a>
-              <a href="#" className="underline">
-                Aviso legal
+        <div className="max-w-6xl mx-auto px-4 py-8 text-sm text-gray-600">
+          <div className="flex flex-col md:flex-row items-center md:justify-between gap-4">
+            <p className="text-center md:text-left">© {new Date().getFullYear()} Rogelio Morales – Psicólogo</p>
+
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-center gap-2 text-center sm:text-left">
+                <a id="privacidad" href="#" className="underline text-sm px-2 py-1 rounded hover:bg-gray-50">Privacidad</a>
+                <a href="#" className="underline text-sm px-2 py-1 rounded hover:bg-gray-50">Aviso legal</a>
+              </div>
+
+              <a
+                href="https://ainnovar-systems.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2"
+                aria-label="AInnovation Systems"
+              >
+                <img
+                  src="https://ainnovar-systems.com/ainnorvar_logo_sin_fondo.png"
+                  alt="AInnovation Systems"
+                  className="h-6 md:h-7"
+                />
+                <span className="text-xs text-gray-500 hidden sm:inline">
+                  Desarrollado por AInnovation Systems
+                </span>
               </a>
             </div>
-            <a
-              href="https://ainnovar-systems.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3"
-              aria-label="AInnovation Systems"
-            >
-              <img
-                src="https://ainnovar-systems.com/ainnorvar_logo_sin_fondo.png"
-                alt="AInnovation Systems"
-                className="h-7"
-              />
-              <span className="text-xs text-gray-500">
-                Desarrollado por AInnovation Systems
-              </span>
-            </a>
           </div>
         </div>
       </footer>
