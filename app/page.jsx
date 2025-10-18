@@ -176,15 +176,15 @@ export default function RogelioMoralesSite() {
     <main className="min-h-screen bg-gray-50 text-gray-800 palette">
       {/* Estilos de animación locales */}
       <style>{`
-        /* Palette variables — ajusta estos valores si quieres otro tono carne */
-        .palette {
-          --surface-white: #ffffff;
-          --surface-warm: #f6ebe2; /* color "carne" suave */
-          --card-bg: rgba(255,255,255,0.92);
-          --border-soft: #e7d8cf;
-          --muted: #6b6b6b;
-          --heading: #111827;
-        }
+         /* Palette variables — ajusta estos valores si quieres otro tono carne */
+         .palette {
+           --surface-white: #ffffff;
+           --surface-warm: #f6ebe2; /* color "carne" suave */
+           --card-bg: rgba(255,255,255,0.92);
+           --border-soft: #e7d8cf;
+           --muted: #6b6b6b;
+           --heading: #111827;
+         }
 
         /* Fondo principal: sutil degradado blanco -> carne */
         .palette {
@@ -217,7 +217,13 @@ export default function RogelioMoralesSite() {
         .reveal { opacity: 0; transform: translateY(18px); transition: opacity .65s cubic-bezier(.2,.9,.2,1), transform .65s cubic-bezier(.2,.9,.2,1); }
         .reveal.is-visible { opacity: 1; transform: translateY(0); }
         @media (prefers-reduced-motion: reduce) { .reveal { transition: none !important; transform: none !important; } }
-      `}</style>
+        
+        /* Fix reseñas (móvil): garantizar altura mínima y evitar overflow de texto */
+        .reviews-container { min-height: 6.5rem; } /* móvil */
+        @media (min-width: 768px) { .reviews-container { min-height: 11rem; } } /* desktop */
+        .reviews-track { align-items: stretch; } /* que los slides ocupen toda la altura */
+        .reviews-article { box-sizing: border-box; min-height: 100%; overflow-wrap: break-word; word-break: break-word; }
+       `}</style>
 
       {/* NAVBAR */}
       <header className="sticky top-0 z-40 backdrop-blur bg-white/70 border-b palette">
