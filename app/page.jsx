@@ -6,38 +6,38 @@ import React, { useState, useEffect, useRef } from "react";
 // Replace /rogelio.jpg with a real photo. Update the Google Maps embed if needed.
 
 export default function RogelioMoralesSite() {
-  const [form, setForm] = useState({ nombre: "", email: "", mensaje: "" });
+  const [form, setForm] = useState({ nombre: "", email: "", whatsapp: "", mensaje: "" });
   const [status, setStatus] = useState("idle");
   const [mobileOpen, setMobileOpen] = useState(false);
-  // Carrusel de reseñas
+  const [scrolled, setScrolled] = useState(false);
+  
+  // Reseñas
   const reviews = [
     {
       name: "Marina R.",
-      text: "Muy profesional y cercano. Noté cambios desde las primeras sesiones.",
+      text: "La terapia con Rogelio me ha ayudado enormemente a gestionar mi ansiedad. Su enfoque es cercano y profesional.",
     },
     {
       name: "Carlos P.",
-      text: "Me ayudó a gestionar el estrés del trabajo con herramientas prácticas.",
+      text: "Después de meses sintiéndome perdido, las sesiones me dieron herramientas reales para superar mi depresión.",
     },
     {
       name: "Lucía G.",
-      text:
-        "La terapia con Rogelio ha sido un antes y un después en mi vida. Muy recomendable.",
+      text: "Rogelio me acompañó en un proceso de duelo muy difícil. Su empatía y profesionalidad fueron fundamentales.",
+    },
+    {
+      name: "Ana M.",
+      text: "Profesional, empático y con un método que realmente funciona. He mejorado muchísimo mi autoestima.",
+    },
+    {
+      name: "Javier S.",
+      text: "Me ayudó a superar un momento muy complicado. Las sesiones online son muy cómodas y efectivas.",
+    },
+    {
+      name: "Elena P.",
+      text: "Recomiendo totalmente sus servicios. Me ha dado las herramientas para gestionar mejor mis emociones.",
     },
   ];
-  const [currentReview, setCurrentReview] = useState(0);
-  const isInteractingRef = useRef(false);
-  const intervalRef = useRef(null);
-  const pauseTimeoutRef = useRef(null);
-  // Slider refs / estado para drag/swipe
-  const containerRef = useRef(null);
-  const trackRef = useRef(null);
-  const startXRef = useRef(0);
-  const deltaXRef = useRef(0);
-  const isDraggingRef = useRef(false);
-  // Modal para ver reseña completa
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalIndex, setModalIndex] = useState(0);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -59,6 +59,7 @@ export default function RogelioMoralesSite() {
         body: JSON.stringify({
           nombre: form.nombre,
           email: form.email,
+          whatsapp: form.whatsapp,
           mensaje: form.mensaje,
         }),
       });
@@ -69,7 +70,7 @@ export default function RogelioMoralesSite() {
       }
 
       setStatus("success");
-      setForm({ nombre: "", email: "", mensaje: "" });
+      setForm({ nombre: "", email: "", whatsapp: "", mensaje: "" });
     } catch (err) {
       console.error("Error sending form:", err);
       setStatus("error");
@@ -108,147 +109,19 @@ export default function RogelioMoralesSite() {
     };
   }, []);
 
+  // Scroll effect for navbar
   useEffect(() => {
-    // autoplay cada 4s salvo interacción del usuario
-    intervalRef.current = setInterval(() => {
-      if (!isInteractingRef.current) {
-        setCurrentReview((s) => (s + 1) % reviews.length);
-      }
-    }, 4000);
-    return () => {
-      clearInterval(intervalRef.current);
-      clearTimeout(pauseTimeoutRef.current);
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
     };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  const markUserInteracted = (actionIndex = null) => {
-    isInteractingRef.current = true;
-    if (actionIndex !== null) setCurrentReview(actionIndex);
-    if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
-    // reanudar autoplay tras 6s de inactividad
-    pauseTimeoutRef.current = setTimeout(() => {
-      isInteractingRef.current = false;
-    }, 6000);
-  };
-
-  const prevReview = () => {
-    markUserInteracted();
-    setCurrentReview((s) => (s - 1 + reviews.length) % reviews.length);
-  };
-  const nextReview = () => {
-    markUserInteracted();
-    setCurrentReview((s) => (s + 1) % reviews.length);
-  };
-
-  // Pointer / touch handlers para swipe (funcionan en desktop y móvil)
-  const onPointerDown = (e) => {
-    isDraggingRef.current = true;
-    startXRef.current = e.clientX ?? (e.touches && e.touches[0].clientX) ?? 0;
-    deltaXRef.current = 0;
-    if (trackRef.current) trackRef.current.style.transition = "none";
-    markUserInteracted();
-  };
-
-  const onPointerMove = (e) => {
-    if (!isDraggingRef.current) return;
-    const clientX = e.clientX ?? (e.touches && e.touches[0].clientX) ?? 0;
-    deltaXRef.current = clientX - startXRef.current;
-    if (trackRef.current && containerRef.current) {
-      const containerW = containerRef.current.clientWidth || 1;
-      const movementPercent = (deltaXRef.current / containerW) * 100;
-      const offsetPercent = -currentReview * 100 + movementPercent;
-      trackRef.current.style.transform = `translateX(${offsetPercent}%)`;
-    }
-  };
-
-  const onPointerUp = () => {
-    if (!isDraggingRef.current) return;
-    isDraggingRef.current = false;
-    const containerW = containerRef.current?.clientWidth || 1;
-    const moved = deltaXRef.current;
-    // Umbral: 25% ancho para cambiar slide
-    if (Math.abs(moved) > containerW * 0.25) {
-      if (moved < 0) setCurrentReview((s) => (s + 1) % reviews.length);
-      else setCurrentReview((s) => (s - 1 + reviews.length) % reviews.length);
-    } else {
-      // volver al slide actual (usar % para evitar gaps)
-      if (trackRef.current) {
-        trackRef.current.style.transition = "transform 420ms cubic-bezier(.2,.9,.2,1)";
-        trackRef.current.style.transform = `translateX(${-currentReview * 100}%)`;
-      }
-    }
-    deltaXRef.current = 0;
-
-    // permitir que la altura vuelva a auto tras la animación (evitar "saltos")
-    if (containerRef.current) {
-      setTimeout(() => {
-        try { containerRef.current.style.height = "auto"; } catch (e) {}
-      }, 420);
-    }
-  };
-  
-  // Asegurarse que el track se reposiciona cuando cambia currentReview (autoplay o manual)
-  useEffect(() => {
-    if (trackRef.current) {
-      trackRef.current.style.transition = "transform 420ms cubic-bezier(.2,.9,.2,1)";
-      trackRef.current.style.transform = `translateX(${-currentReview * 100}%)`;
-    }
-  }, [currentReview]);
-
-  // Ajustar la altura del contenedor al slide activo para evitar recortes en móvil
-  useEffect(() => {
-    const adjustHeight = () => {
-      const container = containerRef.current;
-      const track = trackRef.current;
-      if (!container || !track) return;
-      const active = track.children[currentReview];
-      if (active) {
-        // usar scrollHeight para contar todo el contenido y evitar recortes
-        const h = active.scrollHeight;
-        container.style.height = `${h}px`;
-      } else {
-        container.style.height = "auto";
-      }
-    };
-
-    // Ajustar inmediatamente y cuando cambie tamaño del slide
-    adjustHeight();
-
-    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(adjustHeight) : null;
-    if (ro && trackRef.current) {
-      Array.from(trackRef.current.children).forEach((child) => ro.observe(child));
-    }
-    window.addEventListener("resize", adjustHeight);
-    return () => {
-      if (ro) ro.disconnect();
-      window.removeEventListener("resize", adjustHeight);
-    };
-  }, [currentReview, reviews.length]);
-
-  // cerrar modal con Escape y bloquear scroll mientras está abierto
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === "Escape") closeModal(); };
-    if (modalOpen) {
-      document.addEventListener("keydown", onKey);
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
-  }, [modalOpen]);
-
-  const openModal = (i) => {
-    markUserInteracted(i);
-    setModalIndex(i);
-    setModalOpen(true);
-  };
-  const closeModal = () => setModalOpen(false);
 
   return (
     <main className="min-h-screen bg-gray-50 text-gray-800 palette">
+      {/* Espaciador para el navbar fijo */}
+      <div className="h-20"></div>
       {/* Estilos de animación locales */}
       <style>{`
          /* Palette variables — ajusta estos valores si quieres otro tono carne */
@@ -292,101 +165,89 @@ export default function RogelioMoralesSite() {
         .reveal { opacity: 0; transform: translateY(18px); transition: opacity .65s cubic-bezier(.2,.9,.2,1), transform .65s cubic-bezier(.2,.9,.2,1); }
         .reveal.is-visible { opacity: 1; transform: translateY(0); }
         @media (prefers-reduced-motion: reduce) { .reveal { transition: none !important; transform: none !important; } }
-        
-        /* Fix reseñas (móvil): garantizar altura mínima y evitar overflow de texto */
-        .reviews-container { min-height: 8rem; /* algo más grande para móviles */ }
-        @media (min-width: 768px) { .reviews-container { min-height: 11rem; } } /* desktop */
-        .reviews-track { align-items: stretch; }
-        .reviews-article { box-sizing: border-box; min-height: 100%; overflow-wrap: anywhere; word-break: break-word; }
-        .reviews-article p { white-space: normal; line-height: 1.35; }
-        /* Suavizar transiciones de altura */
-        .reviews-container { transition: height 260ms ease; will-change: height; }
-        /* Modal (reseña expandida) */
-        .review-modal-backdrop { background: rgba(0,0,0,0.55); }
-        .review-modal { max-width: 720px; width: calc(100% - 2rem); border-radius: 12px; }
        `}</style>
 
       {/* NAVBAR */}
-      <header className="sticky top-0 z-40 backdrop-blur bg-white/70 border-b palette">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo / Brand */}
-            <a href="#inicio" className="flex items-center gap-3 no-underline">
-              <span className="font-semibold tracking-tight text-lg">
-                Rogelio Morales
-              </span>
+      <header 
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled 
+            ? 'bg-white/95 backdrop-blur-lg shadow-lg shadow-black/5' 
+            : 'bg-white/70 backdrop-blur-md'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+            {/* Brand */}
+            <a 
+              href="#inicio" 
+              className="flex items-center gap-3 group no-underline"
+            >
+              <div className="flex flex-col">
+                <span className="font-bold text-gray-900 text-xl tracking-tight leading-none">
+                  Rogelio Morales
+                </span>
+                <span className="text-xs text-gray-500 font-medium">
+                  Psicólogo Clínico
+                </span>
+              </div>
             </a>
 
-            {/* Desktop nav */}
-            <nav className="hidden md:flex items-center gap-8">
-              <a
-                href="#sobre-mi"
-                className="text-sm text-gray-700 hover:text-gray-900 transition-colors"
-              >
-                Sobre mí
-              </a>
-              <a
-                href="#titulaciones"
-                className="text-sm text-gray-700 hover:text-gray-900 transition-colors"
-              >
-                Titulaciones
-              </a>
-              <a
-                href="#resenas"
-                className="text-sm text-gray-700 hover:text-gray-900 transition-colors"
-              >
-                Reseñas
-              </a>
-              <a
-                href="#contacto"
-                className="text-sm text-gray-700 hover:text-gray-900 transition-colors"
-              >
-                Contacto
-              </a>
-              <a
-                href="#ubicacion"
-                className="text-sm text-gray-700 hover:text-gray-900 transition-colors"
-              >
-                Ubicación
-              </a>
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center gap-1">
+              {[
+                { href: '#sobre-mi', label: 'Sobre mí', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
+                { href: '#titulaciones', label: 'Titulaciones', icon: 'M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z' },
+                { href: '#resenas', label: 'Reseñas', icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z' },
+                { href: '#contacto', label: 'Contacto', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
+                { href: '#ubicacion', label: 'Ubicación', icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z' }
+              ].map(item => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  className="group px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50/80 transition-all duration-200 flex items-center gap-2"
+                >
+                  <svg 
+                    className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={item.icon} />
+                  </svg>
+                  {item.label}
+                </a>
+              ))}
             </nav>
 
-            {/* Actions: CTA + Mobile toggle */}
+            {/* CTA Button + Mobile Toggle */}
             <div className="flex items-center gap-3">
               <a
                 href="#contacto"
-                className="hidden md:inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium bg-gray-900 text-white hover:bg-gray-800 transition"
+                className="hidden lg:inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-gray-800 to-gray-700 text-white hover:from-gray-900 hover:to-gray-800 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105"
               >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
                 Pedir información
               </a>
 
               <button
-                className="md:hidden p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-gray-300"
+                className="lg:hidden p-2.5 rounded-xl hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors"
                 aria-label="Abrir menú"
                 aria-expanded={mobileOpen}
                 onClick={() => setMobileOpen((s) => !s)}
               >
                 <svg
-                  className="w-6 h-6 text-gray-700"
+                  className="w-6 h-6 text-gray-700 transition-transform duration-200"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
-                  aria-hidden="true"
+                  style={{ transform: mobileOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}
                 >
                   {mobileOpen ? (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                   ) : (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
                   )}
                 </svg>
               </button>
@@ -394,55 +255,55 @@ export default function RogelioMoralesSite() {
           </div>
         </div>
 
-        {/* Mobile panel */}
+        {/* Mobile Navigation Panel */}
         <div
-          className={`md:hidden transition-[max-height,opacity] duration-300 ease-in-out overflow-hidden bg-white/95 border-t ${
-            mobileOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+          className={`lg:hidden transition-all duration-300 ease-in-out overflow-hidden border-t ${
+            mobileOpen 
+              ? 'max-h-[28rem] opacity-100 border-gray-100' 
+              : 'max-h-0 opacity-0 border-transparent'
           }`}
+          style={{ 
+            background: 'linear-gradient(to bottom, rgba(255,255,255,0.98), rgba(255,255,255,0.95))',
+            backdropFilter: 'blur(12px)'
+          }}
         >
-          <div className="px-4 py-4 space-y-2">
-            <a
-              href="#sobre-mi"
-              onClick={() => setMobileOpen(false)}
-              className="block px-2 py-2 rounded-lg text-gray-700 hover:bg-gray-50"
-            >
-              Sobre mí
-            </a>
-            <a
-              href="#titulaciones"
-              onClick={() => setMobileOpen(false)}
-              className="block px-2 py-2 rounded-lg text-gray-700 hover:bg-gray-50"
-            >
-              Titulaciones
-            </a>
-            <a
-              href="#resenas"
-              onClick={() => setMobileOpen(false)}
-              className="block px-2 py-2 rounded-lg text-gray-700 hover:bg-gray-50"
-            >
-              Reseñas
-            </a>
-            <a
-              href="#contacto"
-              onClick={() => setMobileOpen(false)}
-              className="block px-2 py-2 rounded-lg text-gray-700 hover:bg-gray-50"
-            >
-              Contacto
-            </a>
-            <a
-              href="#ubicacion"
-              onClick={() => setMobileOpen(false)}
-              className="block px-2 py-2 rounded-lg text-gray-700 hover:bg-gray-50"
-            >
-              Ubicación
-            </a>
-            <a
-              href="#contacto"
-              onClick={() => setMobileOpen(false)}
-              className="block mt-2 px-4 py-2 rounded-xl bg-gray-900 text-white text-center"
-            >
-              Pedir información
-            </a>
+          <div className="px-6 py-5 space-y-1">
+            {[
+              { href: '#sobre-mi', label: 'Sobre mí', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
+              { href: '#titulaciones', label: 'Titulaciones', icon: 'M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z' },
+              { href: '#resenas', label: 'Reseñas', icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z' },
+              { href: '#contacto', label: 'Contacto', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
+              { href: '#ubicacion', label: 'Ubicación', icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z' }
+            ].map(item => (
+              <a
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-all duration-200 group"
+              >
+                <svg 
+                  className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={item.icon} />
+                </svg>
+                <span className="font-medium">{item.label}</span>
+              </a>
+            ))}
+            <div className="pt-3">
+              <a
+                href="#contacto"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl bg-gradient-to-r from-gray-800 to-gray-700 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-200"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+                Pedir información
+              </a>
+            </div>
           </div>
         </div>
       </header>
@@ -452,7 +313,7 @@ export default function RogelioMoralesSite() {
         <div className="max-w-6xl mx-auto px-4 py-14 grid md:grid-cols-[1.2fr_.8fr] gap-10 items-center">
           <div>
             <h1 className="text-4xl md:text-5xl font-semibold leading-tight tracking-tight">
-              Psicología cercana en{" "}
+              Psicología clínica en{" "}
               <span className="underline decoration-amber-400/60">
                 Santa Catalina
               </span>
@@ -460,8 +321,8 @@ export default function RogelioMoralesSite() {
             </h1>
             <p className="mt-4 text-lg text-gray-600 max-w-prose">
               Soy <strong>Rogelio Morales</strong>, psicólogo general sanitario.
-              Acompaño a personas y equipos con un enfoque práctico y humano,
-              combinando intervención psicológica, pedagógica y gestión de RR. HH.
+              Te acompaño en tu proceso terapéutico con un enfoque integrador,
+              basado en la evidencia científica y adaptado a tus necesidades personales.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <a
@@ -499,18 +360,17 @@ export default function RogelioMoralesSite() {
             <h2 className="text-2xl font-semibold tracking-tight">Sobre mí</h2>
             <p className="text-gray-700 leading-relaxed">
               Graduado en Psicología por la{" "}
-              <strong>Universitat de les Illes Balears (UIB)</strong>. Cuento con un{" "}
-              <strong>
-                Máster en Gestión de Recursos Humanos, Intervención Psicológica y
-                Pedagógica
-              </strong>{" "}
-              y un <strong>Máster en Psicología General Sanitaria</strong>.
+              <strong>Universitat de les Illes Balears (UIB)</strong> y{" "}
+              <strong>Máster en Psicología General Sanitaria</strong> por la{" "}
+              Universidad Internacional de Valencia (VIU). Estoy habilitado para ejercer
+              como psicólogo sanitario y ofrecer terapia psicológica.
             </p>
             <p className="text-gray-700 leading-relaxed">
-              Trabajo con enfoque integrador: evaluación, intervención y seguimiento,
-              con herramientas basadas en evidencia adaptadas a cada persona. Atiendo
-              ansiedad, estrés laboral, autoestima, habilidades sociales, duelo y
-              otros procesos vitales.
+              Trabajo con un enfoque integrador que combina diferentes corrientes terapéuticas
+              basadas en la evidencia científica. Realizo evaluación, diagnóstico, intervención
+              y seguimiento personalizados. Atiendo problemáticas como ansiedad, depresión,
+              trauma, duelo, trastornos de la conducta alimentaria, gestión emocional,
+              autoestima y otros procesos de desarrollo personal.
             </p>
           </div>
           <ul className="bg-gray-50 rounded-2xl p-6 border space-y-3 text-sm">
@@ -535,7 +395,7 @@ export default function RogelioMoralesSite() {
             <li className="flex gap-3">
               <span>🧾</span>
               <span>
-                <strong>Nº colegiado:</strong> (añadir)
+                <strong>Nº colegiado:</strong> B-03993
               </span>
             </li>
             <li className="flex gap-3">
@@ -544,9 +404,9 @@ export default function RogelioMoralesSite() {
                 <strong>Email:</strong>{" "}
                 <a
                   className="underline"
-                  href="mailto:contacto@rogeliomorales.es"
+                  href="mailto:rogemorales98@gmail.com"
                 >
-                  contacto@rogeliomorales.es
+                  rogemorales98@gmail.com
                 </a>
               </span>
             </li>
@@ -560,23 +420,55 @@ export default function RogelioMoralesSite() {
           <h2 className="text-2xl font-semibold tracking-tight mb-6">
             Titulaciones
           </h2>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 gap-6">
             <div className="rounded-2xl border bg-white p-6">
-              <h3 className="font-medium">Grado en Psicología</h3>
-              <p className="text-sm text-gray-600 mt-1">
+              <h3 className="font-medium text-lg mb-2">Grado en Psicología</h3>
+              <p className="text-sm text-gray-600">
                 Universitat de les Illes Balears (UIB)
               </p>
             </div>
             <div className="rounded-2xl border bg-white p-6">
-              <h3 className="font-medium">
-                Máster en Gestión de RR. HH., Intervención Psicológica y
-                Pedagógica
-              </h3>
-              <p className="text-sm text-gray-600 mt-1">Universitat de les Illes Balears (UIB)</p>
+              <h3 className="font-medium text-lg mb-2">Máster en Psicología General Sanitaria</h3>
+              <p className="text-sm text-gray-600">Universidad Internacional de Valencia (VIU)</p>
+              <p className="text-xs text-gray-500 mt-2">Habilitación sanitaria para ejercer como psicólogo clínico</p>
             </div>
-            <div className="rounded-2xl border bg-white p-6">
-              <h3 className="font-medium">Máster en Psicología General Sanitaria</h3>
-              <p className="text-sm text-gray-600 mt-1">Universidad Internacional de Valencia (UIV)</p>
+          </div>
+          
+          <div className="mt-8 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border border-amber-200 p-6">
+            <h3 className="font-semibold text-lg mb-3">Áreas de intervención</h3>
+            <div className="grid md:grid-cols-2 gap-3 text-sm text-gray-700">
+              <div className="flex items-start gap-2">
+                <span className="text-amber-600 mt-0.5">✓</span>
+                <span>Trastornos de ansiedad y estrés</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-amber-600 mt-0.5">✓</span>
+                <span>Depresión y trastornos del estado de ánimo</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-amber-600 mt-0.5">✓</span>
+                <span>Trauma y duelo</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-amber-600 mt-0.5">✓</span>
+                <span>Trastornos de la conducta alimentaria</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-amber-600 mt-0.5">✓</span>
+                <span>Autoestima y desarrollo personal</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-amber-600 mt-0.5">✓</span>
+                <span>Gestión emocional y habilidades sociales</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-amber-600 mt-0.5">✓</span>
+                <span>Problemas de pareja y relaciones</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-amber-600 mt-0.5">✓</span>
+                <span>Trastornos del sueño</span>
+              </div>
             </div>
           </div>
         </div>
@@ -585,80 +477,53 @@ export default function RogelioMoralesSite() {
       {/* RESEÑAS */}
       <section id="resenas" className="bg-white border-y">
         <div className="max-w-6xl mx-auto px-4 py-14">
-          <h2 className="text-2xl font-semibold tracking-tight mb-6">Reseñas</h2>
+          <div className="text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight mb-2">
+              Lo que dicen mis pacientes
+            </h2>
+            <p className="text-gray-600 text-sm">
+              Testimonios reales de personas que han confiado en mi trabajo
+            </p>
+          </div>
 
-          <div className="rounded-2xl border bg-gray-50 p-2 md:p-6">
-            {/* Contenedor del slider */}
-            <div
-              ref={containerRef}
-              className="relative overflow-hidden touch-pan-y reviews-container"
-              onPointerDown={onPointerDown}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-              onPointerCancel={onPointerUp}
-              onPointerLeave={onPointerUp}
-              style={{ height: "auto", transition: "height 280ms ease" }}
-            >
-               {/* Track: ancho = n * 100% */}
-               <div
-                 ref={trackRef}
-                 style={{ width: `${reviews.length * 100}%`, transform: `translateX(${-currentReview * 100}%)` }}
-                 className="flex transition-transform duration-500 ease-in-out reviews-track"
-               >
-                 {reviews.map((r, i) => (
-                  <article
-                    key={i}
-                    className="flex-shrink-0 w-full px-6 py-6 md:px-12 md:py-14 reviews-article flex flex-col justify-center cursor-pointer"
-                    onMouseEnter={() => markUserInteracted()}
-                    onFocus={() => markUserInteracted()}
-                    onClick={() => openModal(i)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") openModal(i); }}
-                  >
-                    <p className="text-gray-700 italic text-lg md:text-xl">"{r.text}"</p>
-                    <p className="mt-4 font-medium">{r.name}</p>
-                  </article>
-                 ))}
-               </div>
-             </div>
-
-            {/* Controles y puntos — estilo más discreto y profesional */}
-            <div className="mt-6 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={prevReview}
-                  className="rounded-lg p-2 border bg-white hover:bg-gray-100 shadow-sm"
-                  aria-label="Anterior reseña"
-                >
-                  ‹
-                </button>
-                <button
-                  type="button"
-                  onClick={nextReview}
-                  className="rounded-lg p-2 border bg-white hover:bg-gray-100 shadow-sm"
-                  aria-label="Siguiente reseña"
-                >
-                  ›
-                </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {reviews.map((review, index) => (
+              <div
+                key={index}
+                className="bg-gradient-to-br from-white to-gray-50 rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-300"
+              >
+                <div className="mb-4">
+                  <div className="flex gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <svg
+                        key={i}
+                        className="w-5 h-5 text-amber-400"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
+                </div>
+                
+                <p className="text-gray-700 leading-relaxed text-sm mb-4 italic">
+                  "{review.text}"
+                </p>
+                
+                <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                    <span className="text-gray-600 font-semibold text-sm">
+                      {review.name.charAt(0)}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 text-sm">{review.name}</p>
+                    <p className="text-xs text-gray-500">Paciente verificado</p>
+                  </div>
+                </div>
               </div>
-
-              <div className="flex items-center gap-3">
-                {reviews.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => { markUserInteracted(i); setCurrentReview(i); }}
-                    aria-label={`Ver reseña ${i + 1}`}
-                    className={`w-3.5 h-3.5 rounded-full ${i === currentReview ? "bg-gray-900" : "bg-gray-300"} transition`}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="sr-only" aria-live="polite">
-              {reviews[currentReview].name}: {reviews[currentReview].text}
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -683,20 +548,35 @@ export default function RogelioMoralesSite() {
               </div>
 
               <div>
+                <label htmlFor="whatsapp" className="block text-sm font-semibold text-gray-700 mb-2">
+                  WhatsApp <span className="text-gray-500 font-normal">(opcional)</span>
+                </label>
+                <input 
+                  type="tel" 
+                  name="whatsapp" 
+                  id="whatsapp" 
+                  value={form.whatsapp} 
+                  onChange={handleChange} 
+                  placeholder="+34 600 000 000"
+                  className="block w-full p-3 border rounded-lg focus:ring-amber-500 focus:border-amber-500" 
+                />
+              </div>
+
+              <div>
                 <label htmlFor="mensaje" className="block text-sm font-semibold text-gray-700 mb-2">Mensaje</label>
                 <textarea name="mensaje" id="mensaje" value={form.mensaje} onChange={handleChange} className="block w-full p-3 border rounded-lg focus:ring-amber-500 focus:border-amber-500 resize-y" rows={5} required />
               </div>
 
               <div className="mt-2 flex flex-col sm:flex-row gap-3">
-                <button type="submit" className="flex-1 bg-amber-600 text-white rounded-full px-6 py-3 text-lg font-semibold shadow-md hover:bg-amber-500 transition">
-                  {status === "loading" ? "Enviando..." : status === "success" ? "Mensaje Enviado" : "Enviar Mensaje"}
+                <button type="submit" className="flex-1 bg-amber-600 text-white rounded-full px-6 py-3 text-lg font-semibold shadow-md hover:bg-amber-500 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                  {status === "loading" ? "Enviando..." : status === "success" ? "✓ Mensaje Enviado" : "Enviar Mensaje"}
                 </button>
 
                 <a
                   href="https://wa.me/34680385739?text=Hola%20Rogelio%2C%20me%20gustar%C3%ADa%20solicitar%20informaci%C3%B3n"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-green-600 hover:bg-green-700 text-white"
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-green-600 hover:bg-green-700 text-white justify-center font-semibold"
                   aria-label="Abrir chat de WhatsApp"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -707,7 +587,33 @@ export default function RogelioMoralesSite() {
                 </a>
               </div>
 
-              {status === "error" && <p className="mt-3 text-red-600 text-center">Ocurrió un error. Por favor, inténtalo de nuevo.</p>}
+              {status === "success" && (
+                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-xl">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <p className="font-semibold text-green-800">¡Mensaje enviado correctamente!</p>
+                      <p className="text-sm text-green-700 mt-1">Gracias por contactarme. Te responderé lo antes posible.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {status === "error" && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <p className="font-semibold text-red-800">Error al enviar el mensaje</p>
+                      <p className="text-sm text-red-700 mt-1">Por favor, inténtalo de nuevo o contáctame por WhatsApp.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <p className="mt-4 text-xs text-gray-500">Al enviar tus datos aceptarás la política de privacidad. Responderé en 24–48h laborables.</p>
             </form>
@@ -716,28 +622,28 @@ export default function RogelioMoralesSite() {
             <aside className="rounded-2xl p-6 sm:p-8 shadow-lg h-full flex flex-col justify-between"
                    style={{ background: "linear-gradient(135deg, rgba(246,235,226,0.42), rgba(255,255,255,0.9))", border: "1px solid rgba(231,216,207,0.9)" }}>
               <div>
-                <h3 className="text-xl font-semibold mb-3">Contacto directo</h3>
+                <h3 className="text-xl font-semibold mb-2">Contacto directo</h3>
                 <p className="text-sm text-gray-700 mb-4">Teléfono, email y acceso directo al mapa. También puedes abrir el chat por WhatsApp.</p>
 
-                <ul className="space-y-3 text-sm">
-                  <li className="flex items-start gap-3">
-                    <svg className="w-5 h-5 text-rose-600 mt-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 10.5V6a3 3 0 013-3h4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-start gap-2">
+                    <svg className="w-5 h-5 text-rose-600 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 10.5V6a3 3 0 013-3h4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     <div>
                       <div className="text-xs text-gray-500">Teléfono</div>
                       <a href="tel:+34680385739" className="font-medium text-gray-800">+34 680 38 57 39</a>
                     </div>
                   </li>
 
-                  <li className="flex items-start gap-3">
-                    <svg className="w-5 h-5 text-amber-600 mt-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8.5V6a3 3 0 013-3h12a3 3 0 013 3v8a3 3 0 01-3 3h-2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <li className="flex items-start gap-2">
+                    <svg className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8.5V6a3 3 0 013-3h12a3 3 0 013 3v8a3 3 0 01-3 3h-2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     <div>
                       <div className="text-xs text-gray-500">Email</div>
-                      <a href="mailto:contacto@rogeliomorales.es" className="font-medium text-gray-800">contacto@rogeliomorales.es</a>
+                      <a href="mailto:rogemorales98@gmail.com" className="font-medium text-gray-800">rogemorales98@gmail.com</a>
                     </div>
                   </li>
 
-                  <li className="flex items-start gap-3">
-                    <svg className="w-5 h-5 text-green-600 mt-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 12a9 9 0 10-9 9v-2.2A6.8 6.8 0 0121 12z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <li className="flex items-start gap-2">
+                    <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 12a9 9 0 10-9 9v-2.2A6.8 6.8 0 0121 12z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     <div>
                       <div className="text-xs text-gray-500">WhatsApp</div>
                       <a href="https://wa.me/34680385739" target="_blank" rel="noopener noreferrer" className="font-medium text-gray-800">Abrir chat</a>
@@ -830,24 +736,6 @@ export default function RogelioMoralesSite() {
           </div>
         </div>
       </footer>
-
-      {/* Modal para reseña expandida */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center review-modal-backdrop" role="dialog" aria-modal="true">
-          <div className="review-modal bg-white p-6 shadow-xl">
-            <div className="flex items-start justify-between gap-4">
-              <h3 className="text-lg font-semibold">Reseña de {reviews[modalIndex].name}</h3>
-              <button onClick={closeModal} aria-label="Cerrar" className="text-gray-500 hover:text-gray-800">✕</button>
-            </div>
-            <div className="mt-4 text-gray-700">
-              <p className="italic text-base">"{reviews[modalIndex].text}"</p>
-            </div>
-            <div className="mt-6 flex justify-end">
-              <button onClick={closeModal} className="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200">Cerrar</button>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }

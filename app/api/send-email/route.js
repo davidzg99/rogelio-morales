@@ -3,30 +3,20 @@ import { NextResponse } from "next/server";
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { nombre, email, mensaje } = body || {};
+    const { nombre, email, whatsapp, mensaje } = body || {};
 
     if (!nombre || !email || !mensaje) {
       return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
     }
 
-    const endpoint = "https://indraservervps.com/webhook-test/rogelio-send-email";
+    // N8N webhook endpoint
+    const endpoint = process.env.N8N_WEBHOOK_URL || "https://indraservervps.com/webhook/rogelio-send-email";
 
-    // Use server-side env vars (no NEXT_PUBLIC) for credentials
-    const user = process.env.EMAIL_USER || "";
-    const pass = process.env.EMAIL_PASS || "";
-    const basicAuthEnv = process.env.BASIC_AUTH; // optional precomputed "Basic ..."
+    // Basic Auth credentials for N8N
+    const user = process.env.N8N_BASIC_AUTH_USER || "ainnovarsystems";
+    const pass = process.env.N8N_BASIC_AUTH_PASS || "X9f@V7p!kD34qL8zR22hT6mW";
 
-    let authHeader;
-    if (basicAuthEnv) {
-      authHeader = basicAuthEnv;
-    } else if (user && pass) {
-      authHeader = "Basic " + Buffer.from(`${user}:${pass}`).toString("base64");
-    } else {
-      return NextResponse.json(
-        { error: "Configuración del servidor incorrecta: faltan credenciales" },
-        { status: 500 }
-      );
-    }
+    const authHeader = "Basic " + Buffer.from(`${user}:${pass}`).toString("base64");
 
     const upstream = await fetch(endpoint, {
       method: "POST",
@@ -35,10 +25,10 @@ export async function POST(req) {
         Authorization: authHeader,
       },
       body: JSON.stringify({
-        nombre,
-        email,
-        mensaje,
-        source: "server-proxy",
+        name: nombre,
+        email: email,
+        phone: whatsapp || "",
+        message: mensaje,
       }),
       // timeout/network options can be added if needed
     });
